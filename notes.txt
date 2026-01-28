@@ -1,0 +1,29 @@
+KD Tree Notes
+
+Basic Idea
+KD trees are a tree data structure where each layer down represents a different dimension in k dimensional space.
+
+
+Use Cases
+Nearest Neighbor Search
+- Application: Image recognition, recommendation systems, robotics (e.g., obstacle avoidance).
+- Example: Finding the closest point of interest on a map relative to a user’s location.
+
+Range Search
+- Application: Accelerating algorithms like k-nearest neighbors (k-NN).
+- Example: Speeding up the training and prediction phases of k-NN classifiers by using KD Trees to partition the feature space.
+
+Spatial Databases
+- Application: Efficient storage and retrieval of spatial data.
+- Example: Indexing geographical locations for rapid search and updates.
+
+Machine Learning
+- Application: Accelerating algorithms like k-nearest neighbors (k-NN).
+- Example: Speeding up the training and prediction phases of k-NN classifiers by using KD Trees to partition the feature space.
+
+Stats	Average	worst
+Search: 	O(logn)	O(n)		
+Insert		O(logn)	O(n)		
+Delete		O(logn)	O(n)
+Space		O(n)		O(n)
+Worst case happens when the tree is totally unbalanced. Hence, balancing the tree is essential.
