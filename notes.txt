@@ -3,6 +3,10 @@ KD Tree Notes
 Basic Idea
 KD trees are a tree data structure where each layer down represents a different dimension in k dimensional space.
 
+History:
+invented by Jon Louis bentley in 1975. he wanted to find a better solution to the problem of associative retrieval.
+alternatives at the time were inverted files, hashing methods, tries, and quad trees. but they all had their own shortcomings
+
 
 Use Cases
 Nearest Neighbor Search
