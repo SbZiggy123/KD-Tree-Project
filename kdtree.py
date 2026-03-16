@@ -1,6 +1,4 @@
 #implementation made by me, based on the original 1975 paper.
-import time
-import random
 
 class node:
     def __init__(self, key):
@@ -15,32 +13,29 @@ class KDtree:
         self.root = None                #the root node of the kd tree
         self.k = k                      #the amount of dimensions in the kd tree
             
-    def insert(self, node, Q = None):   #function to add a new node to the tree
-        if Q == None:                   #the only time Q would be None would be on an empty tree
-            Q = self.root
-            
-        if self.root == None:           #if tree is empty, set node as root.
-            self.root = node 
+    def insert(self, node):     #function to add a new node to the tree
+        if self.root is None:   #if tree is empty, set node as root.
+            self.root = node
             node.disc = 0
             return
-            
-        else:                            #if there is a root, recursively go down tree until node finds a spot
+
+        Q = self.root
+        while True:             #if there is a root, loop down tree until node finds a spot
             result = self.successor(node, Q)
             if result == "HIGHER":
                 node.disc = (Q.disc + 1) % self.k
-                if Q.hison == None:
+                if Q.hison is None:
                     Q.hison = node
                     return
-                else:
-                    self.insert(node, Q.hison)
+                Q = Q.hison
             elif result == "LOWER":
                 node.disc = (Q.disc + 1) % self.k
-                if Q.loson == None:
+                if Q.loson is None:
                     Q.loson = node
                     return
-                else:
-                    self.insert(node, Q.loson)
-        return
+                Q = Q.loson
+            else:
+                return  # equal, don't insert
             
         
         
@@ -57,20 +52,16 @@ class KDtree:
             
             
     
-    def exactSearch(self, target, Q = None):    #search for a node matching the target node exactly.
-        if Q == None:                           #like in insert(), in exactSearch, Node is only none on the first input. it sets it to the root.
-            Q = self.root                       
-            if Q == None:                       
-                return "Tree is empty"
-        result = self.successor(target, Q)
-        if result == "EQUAL":
-            return Q
-        elif result == "HIGHER":
-            if Q.hison:
-                return self.exactSearch(target, Q.hison)
-        else:
-            if Q.loson:
-                return self.exactSearch(target, Q.loson)
+    def exactSearch(self, target):  #finds the target node in the tree.
+        Q = self.root
+        while Q is not None:
+            result = self.successor(target, Q)
+            if result == "EQUAL":
+                return Q
+            elif result == "HIGHER":
+                Q = Q.hison
+            else:
+                Q = Q.loson
         return None
         
     
@@ -373,139 +364,32 @@ class KDtree:
             n.hison = None
             n.disc = 0
     
-        self.root = None
-        self.root = self.buildBalanced(allNodes, 0)
+        self.root = self.buildBalanced(allNodes, 0, 0, len(allNodes))
 
 
-    def flatten(self, Q, allNodes): #recursively visits every node in the tree and appends it to a list.
-        if Q is None:
-            return
-        allNodes.append(Q)
-        self.flatten(Q.loson, allNodes)
-        self.flatten(Q.hison, allNodes)
+    def flatten(self, Q, allNodes): #pops every node in the tree and makes it a flat list.
+        stack = [Q]
+        while stack:
+            node = stack.pop()
+            if node is None:
+                continue
+            allNodes.append(node)
+            stack.append(node.loson)
+            stack.append(node.hison)
 
-
-    def buildBalanced(self, nodes, depth):  #takes in the cleaned and flattened node list and builds a new balanced kd tree out of it 
-        if not nodes:
+    
+    def buildBalanced(self, nodes, depth, lo, hi):  #takes in the cleaned and flattened node list and builds a new balanced kd tree out of it
+        if lo >= hi:
             return None
     
-        if len(nodes) == 1:
-            nodes[0].disc = depth % self.k
-            return nodes[0]
-        
         disc = depth % self.k
-        nodes.sort(key=lambda n: n.key[disc])  #sort the list to be in the order of the current dimension
+        nodes[lo:hi] = sorted(nodes[lo:hi], key=lambda n: n.key[disc])  # sort only the slice in place
     
-        medianIdx = len(nodes) // 2     #once sorted, pick the median as the root.
+        medianIdx = (lo + hi) // 2
         medianNode = nodes[medianIdx]
         medianNode.disc = disc
     
-        medianNode.loson = self.buildBalanced(nodes[:medianIdx], depth + 1) #fill in the rest of the tree by recursively repeating the process
-        medianNode.hison = self.buildBalanced(nodes[medianIdx + 1:], depth + 1)
+        medianNode.loson = self.buildBalanced(nodes, depth + 1, lo, medianIdx)  #fill in the rest of the tree by recursively repeating the process
+        medianNode.hison = self.buildBalanced(nodes, depth + 1, medianIdx + 1, hi)
     
         return medianNode
-    
-#TESTING
-
-K        = 8        # number of dimensions
-N        = 100000   # number of nodes in the tree
-REPEATS  = 1000     # number of times each test is repeated for timing
-VALRANGE = 10000    # range of numbers for values
-
-
-tree = KDtree(K)
-
-points = [[random.randint(0, VALRANGE) for _ in range(K)] for _ in range(N)]
-
-for p in points:
-    tree.insert(node(p))
-
-print(f"Tree built. ({N} nodes, {K} dimensions)\n")
-
-start = time.perf_counter()
-tree.optimise()
-end = time.perf_counter()
-print(f"Tree optimised in {(end - start):.6f} seconds\n")
-
-
-print("--- Exact Search Timing ---")
-
-exact_targets = [node(random.choice(points)) for _ in range(5)]
-
-start = time.perf_counter()
-for _ in range(REPEATS):
-    for t in exact_targets:
-        tree.exactSearch(t)
-end = time.perf_counter()
-
-print(f"Total time: {(end - start):.6f} seconds")
-print(f"Average per search: {(end - start) / (REPEATS * len(exact_targets)):.9f} seconds\n")
-
-
-print("--- Partial Search Timing ---")
-
-partial_tests = [
-    {i: random.randint(0, VALRANGE) for i in range(K // 2 + 1)}   # constrain just over half the dims
-    for _ in range(5)
-]
-
-start = time.perf_counter()
-for _ in range(REPEATS):
-    for constraints in partial_tests:
-        tree.partialSearch(constraints)
-end = time.perf_counter()
-
-print(f"Total time: {(end - start):.6f} seconds")
-print(f"Average per search: {(end - start) / (REPEATS * len(partial_tests)):.9f} seconds\n")
-
-
-print("--- Region Query Timing ---")
-
-# generate regions that are roughly 10% of the total value range on each dimension.
-region_size = VALRANGE // 10
-region_tests = []
-for _ in range(5):
-    lower = [random.randint(0, VALRANGE - region_size) for _ in range(K)]
-    upper = [l + region_size for l in lower]
-    region_tests.append((upper, lower))
-
-start = time.perf_counter()
-for _ in range(REPEATS):
-    for upper, lower in region_tests:
-        tree.regionQuery(upper, lower)
-end = time.perf_counter()
-
-print(f"Total time: {(end - start):.6f} seconds")
-print(f"Average per query: {(end - start) / (REPEATS * len(region_tests)):.9f} seconds\n")
-
-
-print("--- NearestNeighbour Timing ---")
-
-# random targets spread across the value range — not necessarily in the tree
-nn_tests = [[random.randint(0, VALRANGE) for _ in range(K)] for _ in range(5)]
-
-start = time.perf_counter()
-for _ in range(REPEATS):
-    for target in nn_tests:
-        tree.nearestNeighbour1(target)
-end = time.perf_counter()
-nn1_time = end - start
-
-print(f"NN1 total time: {nn1_time:.6f} seconds")
-print(f"NN1 average per search: {nn1_time / (REPEATS * len(nn_tests)):.9f} seconds\n")
-
-start = time.perf_counter()
-for _ in range(REPEATS):
-    for target in nn_tests:
-        tree.nearestNeighbour2(target)
-end = time.perf_counter()
-nn2_time = end - start
-
-print(f"NN2 total time: {nn2_time:.6f} seconds")
-print(f"NN2 average per search: {nn2_time / (REPEATS * len(nn_tests)):.9f} seconds\n")
-
-# direct comparison so the difference is immediately obvious
-if nn2_time < nn1_time:
-    print(f"NN2 was faster by {((nn1_time - nn2_time) / nn1_time * 100):.1f}%")
-else:
-    print(f"NN1 was faster by {((nn2_time - nn1_time) / nn2_time * 100):.1f}% — NN2 overhead not yet paying off at K={K}")
