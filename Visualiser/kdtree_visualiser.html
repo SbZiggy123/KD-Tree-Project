@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KD Tree Visualiser</title>
+  <link rel="stylesheet" href="kdtree_visualiser.css">
+</head>
+<body>
+
+<div id="kd-wrap">
+
+  <div id="canvas-area">
+    <canvas id="kd-canvas" height="460"></canvas>
+
+    <!-- shown instead of canvas when k > 2 -->
+    <div id="hd-panel" style="display:none;">
+      <p class="hd-title">k = <span id="hd-k"></span> dimensions — no 2D canvas</p>
+      <p class="hd-sub">Points live in full <span id="hd-k2"></span>D space. Use NN or Region query to run operations and see timing below.</p>
+    </div>
+
+    <div id="timing-bar" style="display:none;"></div>
+  </div>
+
+  <div id="sidebar">
+
+    <div class="section-label">Dimensions (k)</div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <input type="range" id="k-slider" min="2" max="20" value="2" step="1"
+             style="flex:1;" oninput="onKSlider(this.value)">
+      <span id="k-label" style="font-size:13px; font-weight:500; min-width:28px; text-align:right;">k = 2</span>
+    </div>
+    <button class="mode-btn" onclick="applyK()" style="font-size:12px;">Apply k &amp; rebuild tree</button>
+
+    <div class="section-label" style="margin-top:4px;">Mode</div>
+    <button class="mode-btn active" id="btn-insert" onclick="setMode('insert')">+ Insert point</button>
+    <button class="mode-btn"        id="btn-nn"     onclick="setMode('nn')">Nearest neighbour</button>
+    <button class="mode-btn"        id="btn-region" onclick="setMode('region')">Region query</button>
+
+    <div id="nn-toggle-wrap" style="display:none; flex-direction:column; gap:6px;">
+      <div class="section-label">Algorithm</div>
+      <div style="display:flex; gap:6px;">
+        <button class="nn-btn mode-btn" id="btn-nn1" onclick="setNNMode('nn1')" style="flex:1; font-size:12px;">NN1 split-plane</button>
+        <button class="nn-btn mode-btn" id="btn-nn2" onclick="setNNMode('nn2')" style="flex:1; font-size:12px;">NN2 bbox</button>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:4px;">Info</div>
+    <div class="info-box" id="info-text">Click the canvas to add points.</div>
+
+    <div class="stat">Points: <span id="stat-n">0</span></div>
+    <div class="stat">Depth:  <span id="stat-d">0</span></div>
+    <div class="stat">k:      <span id="stat-k">2</span></div>
+
+    <div id="legend-box">
+      <div class="section-label" style="margin-top:4px;">Legend</div>
+      <div id="legend-lines"></div>
+      <div class="legend-row" style="margin-top:4px;">
+        <div class="legend-dot" style="background:#D85A30"></div> Query / result
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:4px;">Bulk insert</div>
+    <div style="display:flex; gap:6px; align-items:center;">
+      <input type="number" id="bulk-n" value="500" min="1" max="100000" step="100"
+             style="width:80px; font-size:13px; padding:5px 8px;">
+      <button class="mode-btn" onclick="bulkInsert()" style="flex:1; font-size:12px;">Add points</button>
+    </div>
+
+    <button class="clear-btn" onclick="optimiseTree()" style="margin-top:4px;">Rebalance (optimise)</button>
+    <button class="clear-btn" onclick="clearTree()">Clear all</button>
+
+  </div>
+</div>
+
+<script src="kdtree_visualiser.js"></script>
+</body>
+</html>
